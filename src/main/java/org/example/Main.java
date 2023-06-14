@@ -14,6 +14,7 @@ public class Main {
             Scanner input = new Scanner(System.in);
             String equation = input.nextLine();
             String[] mappedEquation = equation.split("");
+            boolean isEquation = false;
 
             boolean brackets = checkBrackets(equation);
             boolean expression = checkExpression(equation);
@@ -21,22 +22,46 @@ public class Main {
             System.out.println("Expression:" + expression);
             if (brackets && expression){
                 ReplaceNumberToLetter replaced = new ReplaceNumberToLetter();
-                String replacesWithLetters = equation;
 
-                Pattern regex = Pattern.compile("\\d+(\\.\\d+)?");
-                Matcher match = regex.matcher(replacesWithLetters);
-                while (match.find()) {
-                    String number = match.group(0);
-                    replacesWithLetters = replacesWithLetters.replaceAll(number, replaced.addNumber(Integer.parseInt(number)));
-                    match = regex.matcher(replacesWithLetters);
+                String replaceWithLetters = equation;
+
+                Matcher match = Pattern.compile("=\\d+(\\.\\d+)?").matcher(equation);
+
+                if (match.find()){
+                    isEquation = true;
+                    replaceWithLetters = replaceWithLetters.replaceFirst(match.group(0), "");
+                    double x = input.nextDouble();
+                    replaceWithLetters = replaceWithLetters.replaceAll("x", String.valueOf(x));
                 }
 
-                String postfix = infixToPostfix(replacesWithLetters);
-                System.out.println("Postfix: " + postfix);
-                System.out.println(evaluatePostfixExpression(postfix, replaced));
+                replaceWithLetters = replaceNumberToLetters(replaceWithLetters, replaced, Pattern.compile("\\d+(\\.\\d+)?"));
+
+//                System.out.println("Expression: " + replaceWithLetters);
+//                System.out.println("Numbers: " + replaced.getReplacedNumbers());
+
+                String postfix = infixToPostfix(replaceWithLetters);
+//                System.out.println("Postfix: " + postfix);
+//                System.out.println("Numbers: " + replaced.getReplacedNumbers());
+                if (isEquation){
+                    System.out.println("equation is solved correctly: " + (evaluatePostfixExpression(postfix, replaced) == Double.parseDouble(match.group(0).replaceAll("=", ""))));
+                }else {
+                    System.out.println("Answer: " + evaluatePostfixExpression(postfix, replaced));
+                }
             }
         }
 
+    }
+
+    public static String replaceNumberToLetters(String expression, ReplaceNumberToLetter replaced, Pattern regex){
+        String replaceWithLetters = expression;
+
+        Matcher match = regex.matcher(replaceWithLetters);
+        while (match.find()) {
+            String number = match.group(0);
+            replaceWithLetters = replaceWithLetters.replaceFirst(number, replaced.addNumber(Double.valueOf(number)));
+            match = regex.matcher(replaceWithLetters);
+        }
+        return replaceWithLetters;
     }
 
     public static boolean checkBrackets(String equation){
@@ -48,11 +73,10 @@ public class Main {
     }
 
     public static boolean checkExpression(String expression) {
-        return !Pattern.compile("[-+*/]{2}").matcher(expression).find();
+        return !Pattern.compile("[+\\-*\\/]{2}(?<!\\*-|/-)").matcher(expression).find();
     }
 
-    static int Prec(char ch)
-    {
+    static int Prec(char ch) {
         return switch (ch) {
             case '+', '-' -> 1;
             case '*', '/' -> 2;
@@ -61,8 +85,7 @@ public class Main {
         };
     }
 
-    static String infixToPostfix(String expression)
-    {
+    static String infixToPostfix(String expression) {
         String result = new String("");
         Deque<Character> stack = new ArrayDeque<>();
 
@@ -123,9 +146,12 @@ public class Main {
                     case '-' -> st.push(op2 - op1);
                     case '*' -> st.push(op2 * op1);
                     case '/' -> st.push(op2 / op1);
+                    case '^' -> st.push(Math.pow(op2, op1));
                 }
             }
         }
         return st.peek();
     }
 }
+
+//2+5/4/1*-2^(6-2)/4
