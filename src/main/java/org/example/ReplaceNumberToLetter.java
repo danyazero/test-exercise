@@ -24,9 +24,8 @@ public class ReplaceNumberToLetter {
         return replaced.get(index);
     }
 
-    private int findIndex(String[] arr, String t)
-    {
-        int index = Arrays.binarySearch(arr, t);
+    private int findIndex(String[] array, String t) {
+        int index = Arrays.binarySearch(array, t);
         return (index < 0) ? -1 : index;
     }
 
